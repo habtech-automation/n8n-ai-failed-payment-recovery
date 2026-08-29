@@ -1,0 +1,1423 @@
+{
+  "name": "AI Failed Payment & Subscription Recovery System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "payment-failed",
+        "options": {}
+      },
+      "id": "57308db3-c60f-45c0-8a47-0fe7da8eac92",
+      "name": "Payment Failed Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -9344,
+        2304
+      ],
+      "webhookId": "payment-failed"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "customer_name",
+              "type": "string",
+              "value": "={{ $json.body.customer_name }}"
+            },
+            {
+              "id": "p2",
+              "name": "customer_email",
+              "type": "string",
+              "value": "={{ $json.body.customer_email }}"
+            },
+            {
+              "id": "p3",
+              "name": "subscription_id",
+              "type": "string",
+              "value": "={{ $json.body.subscription_id }}"
+            },
+            {
+              "id": "p4",
+              "name": "invoice_id",
+              "type": "string",
+              "value": "={{ $json.body.invoice_id }}"
+            },
+            {
+              "id": "p5",
+              "name": "amount",
+              "type": "number",
+              "value": "={{ $json.body.amount }}"
+            },
+            {
+              "id": "p6",
+              "name": "currency",
+              "type": "string",
+              "value": "={{ $json.body.currency }}"
+            },
+            {
+              "id": "p7",
+              "name": "failure_reason",
+              "type": "string",
+              "value": "={{ $json.body.failure_reason }}"
+            },
+            {
+              "id": "p8",
+              "name": "attempt",
+              "type": "number",
+              "value": "={{ $json.body.attempt }}"
+            },
+            {
+              "id": "p9",
+              "name": "plan",
+              "type": "string",
+              "value": "={{ $json.body.plan }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "57a31c76-c01f-42fe-b5dc-eb9a832d623b",
+      "name": "Parse Payment Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -9120,
+        2304
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE",
+          "mode": "list",
+          "cachedResultName": "Cart Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $json.customer_email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "352639b0-6cc6-4d10-8666-de0f5ad86805",
+      "name": "Retrieve Customer Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -8944,
+        2560
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Om45LiQ88EUiTnQ7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cf1",
+              "leftValue": "={{ $json.customer_email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cc28c51c-25ce-44fa-8416-9780239e636f",
+      "name": "Customer Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -8928,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE",
+          "mode": "list",
+          "cachedResultName": "Cart Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_name": "={{ $('Parse Payment Data').item.json.customer_name }}",
+            "email": "={{ $('Parse Payment Data').item.json.customer_email }}",
+            "status": "={{ $('Parse Payment Data').item.json.failure_reason }}",
+            "total_price": "={{ $('Parse Payment Data').item.json.amount }}",
+            "cart_id": "={{ $('Parse Payment Data').item.json.invoice_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "cart_id",
+              "displayName": "cart_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "products",
+              "displayName": "products",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_price",
+              "displayName": "total_price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b43ea45f-8aab-488a-b411-a88b1ffab389",
+      "name": "Create Customer Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -8704,
+        2336
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Om45LiQ88EUiTnQ7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "9b87350d-e31f-4480-af44-9920ba89b5a7",
+      "name": "Merge Payment + Customer Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -8448,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer first name: {{ $json.customer_name.split(' ')[0] }}\nPlan: {{ $json.plan }}\nFailure reason: {{ $json.failure_reason }}\nAmount: {{ $json.currency }} {{ $json.amount }}\nAttempt number: {{ $json.attempt }}\n\nWrite the recovery email now.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert customer retention specialist. Write a natural, professional, empathetic payment recovery email. Rules: mention the customer's first name, mention the subscription plan, mention the payment failure reason, encourage updating the payment method, keep the email under 180 words, do not sound robotic, end with a friendly call to action. Return JSON only with keys subject and body."
+            }
+          ]
+        }
+      },
+      "id": "b7ed9e26-e197-4512-adb7-60abe2847512",
+      "name": "AI Recovery Email",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -8208,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"subject\": { \"type\": \"string\" },\n    \"body\": { \"type\": \"string\" }\n  },\n  \"required\": [\"subject\", \"body\"]\n}"
+      },
+      "id": "3ae374df-7a2c-4444-ae5b-ceaa1028cf02",
+      "name": "Recovery Email Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -8416,
+        2656
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "ai_subject",
+              "type": "string",
+              "value": "={{ $json.output.subject }}"
+            },
+            {
+              "id": "r2",
+              "name": "ai_body",
+              "type": "string",
+              "value": "={{ $json.output.body }}"
+            },
+            {
+              "id": "r3",
+              "name": "status",
+              "type": "string",
+              "value": "email_1_sent"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e356d940-055d-470e-a655-f558406faf7a",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -7808,
+        2336
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse Payment Data').item.json.customer_email }}",
+        "subject": "={{ $json.ai_subject }}",
+        "message": "={{ $json.ai_body }}",
+        "options": {}
+      },
+      "id": "4175a6a2-283d-424f-82af-dbef2881b3d8",
+      "name": "Send Recovery Email 1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -7568,
+        2336
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "74308d4f-6f02-4b1b-a030-b9a47694f33f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OjJWLgnvMUPdFc12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE",
+          "mode": "list",
+          "cachedResultName": "Cart Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qJXBdzp1ymxXvNJM6dllmrhUa_XJ0HAKQ-RfdB0pUAE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $json.labelIds[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "cart_id",
+              "displayName": "cart_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "products",
+              "displayName": "products",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_price",
+              "displayName": "total_price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4b8aa402-6e55-480a-83d3-990aa679b259",
+      "name": "Log Recovery Attempt",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -7296,
+        2336
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Om45LiQ88EUiTnQ7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 24,
+        "unit": "hours"
+      },
+      "id": "8bd597ba-9d8a-44d0-a31e-61ffd3ef8747",
+      "name": "Wait 24 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -7088,
+        2336
+      ],
+      "webhookId": "6e49f8a8-b1f2-4cc2-bfd6-dbf41058a76a"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.example.com/check-payment?subscription_id={{ $json.subscription_id }}",
+        "options": {}
+      },
+      "id": "4e42d333-b0b9-4984-aa29-f0fb76c8c23e",
+      "name": "Check Payment Status 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -6896,
+        2336
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "ps1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "paid",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "74e5fe27-f109-4b36-b002-c0fd247645c7",
+      "name": "Payment Status Check 1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -6576,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "Thank you, you're all set",
+        "message": "=Hi {{ $json.customer_name.split(' ')[0] }}, your payment for {{ $json.plan }} went through successfully. Thanks for staying with us, your subscription is fully active.",
+        "options": {}
+      },
+      "id": "6384ed94-cfc8-4c62-a402-c5320eba08ea",
+      "name": "Send Thank You Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -6272,
+        2304
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "09df9c28-d438-402f-8637-1fc4c58fcb86",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OjJWLgnvMUPdFc12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Recovery Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "invoice"
+          ],
+          "value": {
+            "invoice": "={{ $json.invoice_id }}",
+            "status": "Recovered"
+          }
+        },
+        "options": {}
+      },
+      "id": "0072d1fa-430d-4840-9834-0e17c6488bc2",
+      "name": "Update Status Recovered 1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -5792,
+        2304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Om45LiQ88EUiTnQ7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer first name: {{ $json.customer_name.split(' ')[0] }}\nPlan: {{ $json.plan }}\nFailure reason: {{ $json.failure_reason }}\nAmount: {{ $json.currency }} {{ $json.amount }}\nThis is follow-up attempt number: {{ $json.attempt }}\n\nWrite the second recovery email now.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert customer retention specialist. Write a slightly more urgent but still friendly payment recovery email. Mention that service interruption may occur if payment is not updated soon. Mention the customer's first name, the plan, and the failure reason. Keep it under 180 words, not robotic. Return JSON only with keys subject and body."
+            }
+          ]
+        }
+      },
+      "id": "2b5cb82f-195a-4f96-a328-6c5b98804e3d",
+      "name": "AI Second Recovery Email",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -6352,
+        2480
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"subject\": { \"type\": \"string\" },\n    \"body\": { \"type\": \"string\" }\n  },\n  \"required\": [\"subject\", \"body\"]\n}"
+      },
+      "id": "d4996510-4398-48c5-84cb-00c1c40e858f",
+      "name": "Recovery Email Schema 2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -6400,
+        2672
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r4",
+              "name": "ai_subject",
+              "type": "string",
+              "value": "={{ $json.output.subject }}"
+            },
+            {
+              "id": "r5",
+              "name": "ai_body",
+              "type": "string",
+              "value": "={{ $json.output.body }}"
+            },
+            {
+              "id": "r6",
+              "name": "status",
+              "type": "string",
+              "value": "email_2_sent"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "017863f3-8cab-471b-a013-f3e3b5d2b70a",
+      "name": "Parse Second AI Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -5984,
+        2480
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "={{ $json.ai_subject }}",
+        "message": "={{ $json.ai_body }}",
+        "options": {}
+      },
+      "id": "8dc3ffda-69fd-446e-9408-062bfb77c519",
+      "name": "Send Second Reminder",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -5968,
+        2720
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "b8ed890c-38af-44bd-9128-068c4ed22472",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OjJWLgnvMUPdFc12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 48,
+        "unit": "hours"
+      },
+      "id": "f4e7584b-b354-4a11-8dce-cb33967c5455",
+      "name": "Wait 48 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -5744,
+        2720
+      ],
+      "webhookId": "eba8bc22-570a-47bc-9833-2289a50f183a"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.example.com/check-payment?subscription_id={{ $json.subscription_id }}",
+        "options": {}
+      },
+      "id": "1117b225-1543-478e-ab03-98061b980ee5",
+      "name": "Check Payment Status 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -5472,
+        2720
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ps2",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "paid",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6f4b86ca-6a12-4460-8055-7f75c5cb0f00",
+      "name": "Payment Status Check 2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -5248,
+        2704
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Recovery Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "invoice"
+          ],
+          "value": {
+            "invoice": "={{ $json.invoice_id }}",
+            "status": "Recovered"
+          }
+        },
+        "options": {}
+      },
+      "id": "87e6733a-c988-4b4d-b14b-c3d7c2e8f6bd",
+      "name": "Update Status Recovered 2",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -4992,
+        2688
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Om45LiQ88EUiTnQ7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "Payment confirmed, thank you",
+        "message": "=Hi {{ $json.customer_name.split(' ')[0] }}, we've confirmed your payment for {{ $json.plan }}. Your subscription is active and there's nothing further you need to do. Thanks for your patience.",
+        "options": {}
+      },
+      "id": "7f7e54e5-07fe-485b-83bf-86b2459a0f9a",
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -4736,
+        2688
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "b1d6d13a-0864-4b08-b189-a1efde35e27d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OjJWLgnvMUPdFc12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "Final Notice: Subscription Payment Required",
+        "message": "=Hi {{ $json.customer_name.split(' ')[0] }}, we still haven't been able to process your payment for {{ $json.plan }}. To avoid any interruption to your service, please update your payment method as soon as possible. If we don't receive payment shortly, your subscription will be suspended. We're happy to help if you're having any trouble, just reply to this email.",
+        "options": {}
+      },
+      "id": "b2fa7780-10c5-43c5-9866-153c32e085c5",
+      "name": "Send Final Notice Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -4992,
+        2896
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "webhookId": "0e0784c0-68d0-4748-b361-f658f1cf91ad",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OjJWLgnvMUPdFc12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Recovery Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "invoice"
+          ],
+          "value": {
+            "invoice": "={{ $json.invoice_id }}",
+            "status": "Recovery Failed"
+          }
+        },
+        "options": {}
+      },
+      "id": "32e2579f-7459-4966-a935-e6dc0b19a8d0",
+      "name": "Update Status Recovery Failed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -4736,
+        2896
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Om45LiQ88EUiTnQ7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Errors",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('dd/MM/yyyy') }}",
+            "subscription_id": "={{ $json.subscription_id }}",
+            "customer_email": "={{ $json.customer_email }}",
+            "error_step": "Check Payment Status"
+          }
+        },
+        "options": {}
+      },
+      "id": "b11b7cae-0bf6-4067-adc3-33813b19a1ff",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -5488,
+        2352
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Om45LiQ88EUiTnQ7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## PAYMENT EVENT\nWebhook receives the failed payment payload from your billing system and flattens it into named fields for the rest of the workflow.",
+        "height": 240,
+        "width": 420
+      },
+      "id": "2b5128a3-4f39-4224-ac21-664c5c9f9c61",
+      "name": "Sticky - Payment Event",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -9392,
+        1968
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## CUSTOMER LOOKUP\nLooks up the customer in Google Sheets by email. alwaysOutputData is ON so a no-match still passes one empty item through. Customer Found? checks for it: existing customer goes straight to merge; new customer gets auto-created in the Customers sheet first (Tier: New, LTV: 0), then merges the same way. Either path always reaches the AI step.",
+        "height": 260,
+        "width": 460
+      },
+      "id": "b09c65b7-f824-4b03-865e-55cb8dc2107c",
+      "name": "Sticky - Customer Lookup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -8944,
+        1984
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## AI EMAIL GENERATION\nOpenAI Chat Model + Structured Output Parser generate a JSON {subject, body} recovery email tailored to the customer and failure reason.",
+        "height": 240,
+        "width": 460
+      },
+      "id": "5983f96c-0420-4bac-9ea6-5c9d29c437d2",
+      "name": "Sticky - AI Email Generation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -8384,
+        2000
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## EMAIL DELIVERY\nGmail sends the AI-generated subject/body to the customer.",
+        "height": 240,
+        "width": 220
+      },
+      "id": "47b5190d-3654-4032-a3ff-a0799e0de22f",
+      "name": "Sticky - Email Delivery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -7856,
+        2016
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## LOGGING\nEvery attempt is appended to the Recovery Log sheet for tracking and reporting.",
+        "height": 240,
+        "width": 220
+      },
+      "id": "7019a794-13fc-411f-9dfa-304ec627704b",
+      "name": "Sticky - Logging",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -7552,
+        2016
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FOLLOW-UP\nWaits 24 hours, rechecks payment status, and if still unpaid generates and sends a firmer second AI email.",
+        "height": 240,
+        "width": 900
+      },
+      "id": "5aad50ed-015f-455d-a6bb-310352c8ae29",
+      "name": "Sticky - Follow-up",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -7264,
+        2016
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## PAYMENT VERIFICATION\nWaits 48 hours after the second email and rechecks payment status again before deciding the final outcome.",
+        "height": 240,
+        "width": 460
+      },
+      "id": "1b784e13-834f-416e-8fb9-c209a659f060",
+      "name": "Sticky - Payment Verification",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6288,
+        2016
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FINAL RECOVERY\nPaid: send confirmation, mark Recovered.\nStill unpaid: send Final Notice, mark Recovery Failed.",
+        "height": 240,
+        "width": 460
+      },
+      "id": "6402229d-3ef6-45a2-b41b-3ce1d968e517",
+      "name": "Sticky - Final Recovery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5776,
+        2016
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -8640,
+        2640
+      ],
+      "id": "f0c19b90-4a4b-4ef0-b29d-f47207e41893",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "TR6uzsL6M1OpchsK",
+          "name": "OpenRouter account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Payment Failed Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Payment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Payment Data": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Customer Record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Payment + Customer Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Retrieve Customer Record": {
+      "main": [
+        [
+          {
+            "node": "Customer Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Found?": {
+      "main": [
+        [
+          {
+            "node": "Merge Payment + Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Customer Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Customer Record": {
+      "main": [
+        [
+          {
+            "node": "Merge Payment + Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Payment + Customer Data": {
+      "main": [
+        [
+          {
+            "node": "AI Recovery Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recovery Email Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Recovery Email",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Recovery Email": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Send Recovery Email 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Recovery Email 1": {
+      "main": [
+        [
+          {
+            "node": "Log Recovery Attempt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Recovery Attempt": {
+      "main": [
+        [
+          {
+            "node": "Wait 24 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Payment Status 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Payment Status 1": {
+      "main": [
+        [
+          {
+            "node": "Payment Status Check 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Status Check 1": {
+      "main": [
+        [
+          {
+            "node": "Send Thank You Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Second Recovery Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Thank You Email": {
+      "main": [
+        [
+          {
+            "node": "Update Status Recovered 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recovery Email Schema 2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Second Recovery Email",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Second Recovery Email": {
+      "main": [
+        [
+          {
+            "node": "Parse Second AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Second AI Response": {
+      "main": [
+        [
+          {
+            "node": "Send Second Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Second Reminder": {
+      "main": [
+        [
+          {
+            "node": "Wait 48 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 48 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Payment Status 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Payment Status 2": {
+      "main": [
+        [
+          {
+            "node": "Payment Status Check 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Status Check 2": {
+      "main": [
+        [
+          {
+            "node": "Update Status Recovered 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Final Notice Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Recovered 2": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Final Notice Email": {
+      "main": [
+        [
+          {
+            "node": "Update Status Recovery Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Recovery Email",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Second Recovery Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "780c97b3-0bdb-4609-87f7-f79ad5cdd733",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5cbbd120c52dc8c0911dbdf390c52a2354702f194fbe4909355bc0904d5febe6"
+  },
+  "id": "XN9wOkXPs9hbVDxa",
+  "tags": []
+}
